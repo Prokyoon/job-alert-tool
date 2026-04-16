@@ -8,7 +8,7 @@ include_keywords:
   - Technical Support L3
   - Technical Support Lead
   - Technical Support Team Lead
-  - Technical Support TL 
+  - Technical Support TL
   - Technical Support Manager
   - Technical Account Manager
   - Customer Support
@@ -33,3 +33,82 @@ include_keywords:
   - CSM
   - Customer Success Manager
   - Implementation
+
+# Languages I am happy to work in
+allowed_languages:
+  - English
+  - Romanian
+  - Română
+
+# All other languages — if found in the job title, the job is excluded
+blocked_languages:
+  - French
+  - German
+  - Deutsch
+  - Spanish
+  - Español
+  - Italian
+  - Italiano
+  - Portuguese
+  - Português
+  - Dutch
+  - Nederlands
+  - Swedish
+  - Svenska
+  - Danish
+  - Dansk
+  - Finnish
+  - Suomi
+  - Norwegian
+  - Polish
+  - Czech
+  - Slovak
+  - Hungarian
+  - Greek
+  - Turkish
+  - Arabic
+  - Hebrew
+  - Russian
+  - Ukrainian
+  - Mandarin
+  - Japanese
+  - Korean
+
+location_keywords:
+  - Europe
+  - European
+  - EU
+  - EMEA
+  - Remote
+  - Worldwide
+  - Global
+  - UK
+  - United Kingdom
+  - Germany
+  - France
+  - Netherlands
+  - Romania
+  - Portugal
+  - Spain
+  - Poland
+  - Ireland
+  - Czech
+  - Hungary
+  - Austria
+  - Sweden
+  - Denmark
+  - Belgium
+  - Italy
+
+location_exclude:
+  - United States
+  - USA
+  - US only
+  - Canada
+  - Australia
+  - India
+  - Brazil
+  - Mexico
+  - Singapore
+  - Japan
+  - China
