@@ -1,6 +1,6 @@
 companies:
  
-# ---Top 25 RegTech Companies from Greenhouse (API, most reliable) ---
+# ---Top (25) RegTech Companies from Greenhouse (API, most reliable) ---
 
 - name: ComplyAdvantage
   ats: greenhouse
@@ -17,10 +17,6 @@ companies:
 - name: Trulioo
   ats: greenhouse
   slug: trulioo
-
-- name: Alloy
-  ats: greenhouse
-  slug: alloy
 
 - name: Sardine
   ats: greenhouse
@@ -95,7 +91,7 @@ companies:
   slug: ascent
 
 
-  # ---Top 25 FinTech Companies from Greenhouse or Lever (API, most reliable) ---
+  # ---Top 8 (8) FinTech Companies from Greenhouse or Lever (API, most reliable) ---
 
 - name: SoFi
   ats: greenhouse
@@ -179,14 +175,6 @@ companies:
   ats: greenhouse
   slug: airwallex
 
-- name: Chainalysis
-  ats: greenhouse
-  slug: chainalysis
-
-- name: Sardine
-  ats: greenhouse
-  slug: sardine
-
 - name: Alloy
   ats: greenhouse
   slug: alloy
@@ -207,3 +195,7 @@ companies:
 - name: Checkout.com
   ats: greenhouse
   slug: checkoutcom
+
+- name: Circle
+  ats: greenhouse
+  slug: circle

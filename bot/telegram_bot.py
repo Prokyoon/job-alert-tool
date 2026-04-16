@@ -1,22 +1,37 @@
 import asyncio
 import os
 from telegram import Bot
+from telegram.error import RetryAfter
 from dotenv import load_dotenv
- 
+
 load_dotenv()
- 
-async def send_alert(job: dict):
-    bot = Bot(token=os.getenv('TELEGRAM_BOT_TOKEN'))
-    chat_id = os.getenv('TELEGRAM_CHAT_ID')
-    
-    message = (
-        f"New job found\n\n"
-        f"Company: {job['company']}\n"
-        f"Role: {job['title']}\n"
-        f"Location: {job['location']}\n"
-        f"Link: {job['url']}"
-    )
-    await bot.send_message(chat_id=chat_id, text=message)
- 
-def notify(job: dict):
-    asyncio.run(send_alert(job))
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+bot = Bot(token=BOT_TOKEN)
+
+async def send_alert(job):
+    message = f"""
+🆕 New Job Found!
+
+🏢 Company: {job['company']}
+💼 Title: {job['title']}
+🔗 Apply: {job['url']}
+"""
+
+    while True:
+        try:
+            await bot.send_message(
+                chat_id=CHAT_ID,
+                text=message
+            )
+            return  # success → exit function
+
+        except RetryAfter as e:
+            wait_time = e.retry_after
+            print(f"⚠️ Telegram rate limit hit. Waiting {wait_time} seconds...")
+            await asyncio.sleep(wait_time)
+
+async def notify(job):
+    await send_alert(job)
