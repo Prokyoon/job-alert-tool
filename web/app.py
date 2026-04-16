@@ -2,18 +2,23 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import sys, os
-from db.database import init_db
+import os
+
+from db.database import init_db, get_all_jobs, update_status
 
 init_db()
- 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from db.database import get_all_jobs, update_status
- 
+
 app = FastAPI()
-templates = Jinja2Templates(directory='web/templates')
-app.mount('/static', StaticFiles(directory='web/static'), name='static')
- 
+
+BASE_DIR = os.path.dirname(__file__)
+
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+static_dir = os.path.join(BASE_DIR, "static")
+if os.path.exists(static_dir):
+    app.mount('/static', StaticFiles(directory=static_dir), name='static')
+
+
 @app.get('/', response_class=HTMLResponse)
 async def dashboard(request: Request, status: str = '', search: str = ''):
     jobs = get_all_jobs(
@@ -27,7 +32,7 @@ async def dashboard(request: Request, status: str = '', search: str = ''):
         'status_filter': status,
         'search': search,
     })
- 
+
 @app.post('/update-status')
 async def change_status(job_id: str = Form(...), status: str = Form(...)):
     update_status(job_id, status)
