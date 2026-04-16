@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Job Alert Dashboard</title>
+  <script src='https://cdn.tailwindcss.com'></script>
+</head>
+<body class='bg-slate-50 text-slate-800'>
+ 
+  <!-- Header -->
+  <header class='bg-white border-b border-slate-200 px-6 py-4'>
+    <div class='max-w-6xl mx-auto flex items-center justify-between'>
+      <h1 class='text-xl font-bold text-blue-600'>Job Radar</h1>
+      <span class='text-sm text-slate-500'>{{ total }} jobs found</span>
+    </div>
+  </header>
+ 
+  <main class='max-w-6xl mx-auto px-6 py-8'>
+ 
+    <!-- Filters -->
+    <form method='get' class='flex gap-3 mb-8'>
+      <input name='search' value='{{ search }}'
+        placeholder='Search roles or companies...'
+        class='flex-1 border border-slate-200 rounded-lg px-4 py-2 text-sm
+               focus:outline-none focus:ring-2 focus:ring-blue-500'>
+      <select name='status'
+        class='border border-slate-200 rounded-lg px-3 py-2 text-sm'>
+        <option value=''>All statuses</option>
+        <option value='new' {% if status_filter=='new' %}selected{% endif %}>New</option>
+        <option value='viewed' {% if status_filter=='viewed' %}selected{% endif %}>Viewed</option>
+        <option value='applied' {% if status_filter=='applied' %}selected{% endif %}>Applied</option>
+        <option value='archived' {% if status_filter=='archived' %}selected{% endif %}>Archived</option>
+      </select>
+      <button class='bg-blue-600 text-white px-4 py-2 rounded-lg text-sm'>Search</button>
+    </form>
+ 
+    <!-- Job Cards -->
+    <div class='space-y-3'>
+    {% for job in jobs %}
+      <div class='bg-white border border-slate-200 rounded-xl p-5
+                  hover:border-blue-300 hover:shadow-sm transition-all'>
+        <div class='flex items-start justify-between gap-4'>
+          <div class='flex-1'>
+            <div class='flex items-center gap-2 mb-1'>
+              <span class='text-xs font-medium text-blue-600 bg-blue-50
+                           px-2 py-0.5 rounded-full'>
+                {{ job.company }}
+              </span>
+              <span class='text-xs text-slate-400'>{{ job.location }}</span>
+            </div>
+            <a href='{{ job.url }}' target='_blank'
+               class='font-semibold text-slate-800 hover:text-blue-600'>
+              {{ job.title }}
+            </a>
+            <p class='text-xs text-slate-400 mt-1'>
+              Found {{ job.date_found[:10] }}
+              &middot; via {{ job.ats_source }}
+            </p>
+          </div>
+          <form method='post' action='/update-status' class='flex gap-2 items-center'>
+            <input type='hidden' name='job_id' value='{{ job.id }}'>
+            <select name='status' onchange='this.form.submit()'
+              class='text-xs border border-slate-200 rounded-lg px-2 py-1.5'>
+              <option {% if job.status=='new' %}selected{% endif %}>new</option>
+              <option {% if job.status=='viewed' %}selected{% endif %}>viewed</option>
+              <option {% if job.status=='applied' %}selected{% endif %}>applied</option>
+              <option {% if job.status=='archived' %}selected{% endif %}>archived</option>
+            </select>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class='text-center text-slate-400 py-16'>No jobs found.</div>
+    {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

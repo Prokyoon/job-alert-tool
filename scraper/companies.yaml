@@ -1,0 +1,209 @@
+companies:
+ 
+# ---Top 25 RegTech Companies from Greenhouse (API, most reliable) ---
+
+- name: ComplyAdvantage
+  ats: greenhouse
+  slug: complyadvantagejobs
+
+- name: Fenergo
+  ats: greenhouse
+  slug: fenergo
+
+- name: Onfido
+  ats: greenhouse
+  slug: onfido
+
+- name: Trulioo
+  ats: greenhouse
+  slug: trulioo
+
+- name: Alloy
+  ats: greenhouse
+  slug: alloy
+
+- name: Sardine
+  ats: greenhouse
+  slug: sardine
+
+- name: ThetaRay
+  ats: greenhouse
+  slug: thetaray
+
+- name: Feedzai
+  ats: greenhouse
+  slug: feedzai
+
+- name: Featurespace
+  ats: greenhouse
+  slug: featurespace
+
+- name: Elliptic
+  ats: greenhouse
+  slug: elliptic
+
+- name: Chainalysis
+  ats: greenhouse
+  slug: chainalysis
+
+- name: Napier AI
+  ats: greenhouse
+  slug: napierai
+
+- name: Tookitaki
+  ats: greenhouse
+  slug: tookitaki
+
+- name: ComplyCube
+  ats: greenhouse
+  slug: complycube
+
+- name: Riskified
+  ats: greenhouse
+  slug: riskified
+
+- name: Forter
+  ats: greenhouse
+  slug: forter
+
+- name: ComplySci
+  ats: greenhouse
+  slug: complysci
+
+- name: Hawk AI
+  ats: greenhouse
+  slug: hawkai
+
+- name: Shufti Pro
+  ats: greenhouse
+  slug: shuftipro
+
+- name: IdentityMind
+  ats: greenhouse
+  slug: identitymind
+
+- name: Acuris Risk Intelligence
+  ats: greenhouse
+  slug: acuris
+
+- name: Comply365
+  ats: greenhouse
+  slug: comply365
+
+- name: Ascent RegTech
+  ats: greenhouse
+  slug: ascent
+
+
+  # ---Top 25 FinTech Companies from Greenhouse or Lever (API, most reliable) ---
+
+- name: SoFi
+  ats: greenhouse
+  slug: sofi
+
+- name: N26
+  ats: greenhouse
+  slug: n26
+
+- name: Klarna
+  ats: greenhouse
+  slug: klarna
+
+- name: Chime
+  ats: greenhouse
+  slug: chime
+
+- name: Kraken
+  ats: greenhouse
+  slug: kraken
+
+- name: Gemini
+  ats: greenhouse
+  slug: gemini
+
+- name: Robinhood
+  ats: greenhouse
+  slug: robinhood
+
+- name: Mollie
+  ats: greenhouse
+  slug: mollie
+
+- name: GoCardless
+  ats: greenhouse
+  slug: gocardless
+
+  # ---Top 25 Hybrid (FinTech + RegTech) Companies from Greenhouse or Lever (API, most reliable) ---
+
+- name: Stripe
+  ats: greenhouse
+  slug: stripe
+
+- name: Adyen
+  ats: greenhouse
+  slug: adyen
+
+- name: Coinbase
+  ats: greenhouse
+  slug: coinbase
+
+- name: Revolut
+  ats: greenhouse
+  slug: revolut
+
+- name: Brex
+  ats: greenhouse
+  slug: brex
+
+- name: Ramp
+  ats: greenhouse
+  slug: ramp
+
+- name: Affirm
+  ats: greenhouse
+  slug: affirm
+
+- name: Marqeta
+  ats: greenhouse
+  slug: marqeta
+
+- name: Wise
+  ats: lever
+  slug: wise
+
+- name: Plaid
+  ats: lever
+  slug: plaid
+
+- name: Airwallex
+  ats: greenhouse
+  slug: airwallex
+
+- name: Chainalysis
+  ats: greenhouse
+  slug: chainalysis
+
+- name: Sardine
+  ats: greenhouse
+  slug: sardine
+
+- name: Alloy
+  ats: greenhouse
+  slug: alloy
+
+- name: Rippling
+  ats: greenhouse
+  slug: rippling
+
+#Do NOT include Deel just yet
+#- name: Deel
+# ats: greenhouse
+#  slug: deel
+
+- name: Sumsub
+  ats: greenhouse
+  slug: sumsub
+
+- name: Checkout.com
+  ats: greenhouse
+  slug: checkoutcom
