@@ -7,7 +7,7 @@
   <script src='https://cdn.tailwindcss.com'></script>
 </head>
 <body class='bg-slate-50 text-slate-800'>
- 
+
   <!-- Header -->
   <header class='bg-white border-b border-slate-200 px-6 py-4'>
     <div class='max-w-6xl mx-auto flex items-center justify-between'>
@@ -15,9 +15,9 @@
       <span class='text-sm text-slate-500'>{{ total }} jobs found</span>
     </div>
   </header>
- 
+
   <main class='max-w-6xl mx-auto px-6 py-8'>
- 
+
     <!-- Filters -->
     <form method='get' class='flex gap-3 mb-8'>
       <input name='search' value='{{ search }}'
@@ -34,7 +34,7 @@
       </select>
       <button class='bg-blue-600 text-white px-4 py-2 rounded-lg text-sm'>Search</button>
     </form>
- 
+
     <!-- Job Cards -->
     <div class='space-y-3'>
     {% for job in jobs %}
@@ -54,7 +54,7 @@
               {{ job.title }}
             </a>
             <p class='text-xs text-slate-400 mt-1'>
-              Found {{ job.date_found[:10] }}
+              Found {{ job.date_found.strftime('%Y-%m-%d') }}
               &middot; via {{ job.ats_source }}
             </p>
           </div>
