@@ -11,7 +11,6 @@ init_db()
 app = FastAPI()
 
 BASE_DIR = os.path.dirname(__file__)
-
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 static_dir = os.path.join(BASE_DIR, "static")
@@ -25,21 +24,38 @@ async def health_check():
 
 
 @app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, status: str = "", search: str = ""):
+async def dashboard(
+    request: Request,
+    status: str = "",
+    search: str = "",
+    page: int = 1,
+    per_page: int = 25
+):
     try:
-        jobs = get_all_jobs(
+        all_jobs = get_all_jobs(
             status=status if status else None,
             search=search if search else None
         )
     except Exception as e:
         print(f"Database error: {e}")
-        jobs = []
+        all_jobs = []
+
+    total = len(all_jobs)
+    per_page = per_page if per_page in [10, 25, 50, 100] else 25
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, total_pages))
+    start = (page - 1) * per_page
+    jobs = all_jobs[start:start + per_page]
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "jobs": jobs,
-        "total": len(jobs),
+        "total": total,
         "status_filter": status,
         "search": search,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages,
     })
 
 
