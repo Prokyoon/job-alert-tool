@@ -2,9 +2,10 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from typing import List
 import os
 
-from db.database import init_db, get_all_jobs, update_status
+from db.database import init_db, get_all_jobs, update_status, bulk_update_status
 
 init_db()
 
@@ -62,4 +63,13 @@ async def dashboard(
 @app.post("/update-status")
 async def change_status(job_id: str = Form(...), status: str = Form(...)):
     update_status(job_id, status)
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/bulk-update-status")
+async def bulk_update_status_route(
+    job_ids: List[str] = Form(...),
+    status: str = Form(...)
+):
+    bulk_update_status(job_ids, status)
     return RedirectResponse("/", status_code=303)

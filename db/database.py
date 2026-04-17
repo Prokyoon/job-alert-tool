@@ -88,3 +88,14 @@ def cleanup_old_jobs():
     cur.close()
     conn.close()
     print("Old jobs cleaned up.")
+
+def bulk_update_status(job_ids: list, status: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.executemany(
+        "UPDATE jobs SET status = %s WHERE id = %s",
+        [(status, job_id) for job_id in job_ids]
+    )
+    conn.commit()
+    cur.close()
+    conn.close()

@@ -39,6 +39,7 @@ allowed_languages:
   - English
   - Romanian
   - Română
+  - Romana
 
 # All other languages — if found in the job title, the job is excluded
 blocked_languages:
@@ -101,14 +102,36 @@ location_keywords:
   - Italy
 
 location_exclude:
-  - United States
-  - USA
-  - US only
-  - Canada
-  - Australia
-  - India
-  - Brazil
-  - Mexico
-  - Singapore
-  - Japan
-  - China
+  - united states
+  - usa
+  - us only
+  - us-only
+  - remote, usa
+  - remote - usa
+  - remote, us
+  - north america
+  - canada
+  - toronto
+  - vancouver
+  - montreal
+  - australia
+  - sydney
+  - melbourne
+  - india
+  - bangalore
+  - mumbai
+  - brazil
+  - mexico
+  - singapore
+  - japan
+  - china
+  - new york
+  - san francisco
+  - chicago
+  - seattle
+  - boston
+  - austin
+  - los angeles
+  - atlanta
+  - denver
+  - miami

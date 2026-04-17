@@ -6,12 +6,10 @@
   <title>Job Radar</title>
   <script src='https://cdn.tailwindcss.com'></script>
   <script>
-    // Auto-submit form when status or per_page dropdowns change
     function autoSubmit(el) {
       el.closest('form').submit();
     }
 
-    // Relative time helper — "2 days ago", "just now", etc.
     function timeAgo(dateStr) {
       const date = new Date(dateStr);
       const now = new Date();
@@ -25,15 +23,56 @@
       return Math.floor(diff / (86400 * 30)) + ' months ago';
     }
 
-    // Replace all date placeholders after page loads
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('[data-date]').forEach(el => {
         el.textContent = timeAgo(el.dataset.date);
       });
     });
+
+    // --- Bulk select logic ---
+    function toggleSelectAll(master) {
+      document.querySelectorAll('.job-checkbox').forEach(cb => {
+        cb.checked = master.checked;
+      });
+      updateBulkBar();
+    }
+
+    function updateBulkBar() {
+      const checked = document.querySelectorAll('.job-checkbox:checked');
+      const bar = document.getElementById('bulk-bar');
+      const countEl = document.getElementById('bulk-count');
+      if (checked.length > 0) {
+        bar.classList.remove('hidden');
+        countEl.textContent = checked.length;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function submitBulk(status) {
+      const checked = document.querySelectorAll('.job-checkbox:checked');
+      if (checked.length === 0) return;
+      const form = document.getElementById('bulk-form');
+      // Clear previous hidden inputs
+      form.querySelectorAll('input[name="job_ids"]').forEach(el => el.remove());
+      checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'job_ids';
+        input.value = cb.value;
+        form.appendChild(input);
+      });
+      form.querySelector('input[name="status"]').value = status;
+      form.submit();
+    }
   </script>
 </head>
 <body class='bg-slate-50 text-slate-800'>
+
+  <!-- Hidden bulk form -->
+  <form id='bulk-form' method='post' action='/bulk-update-status'>
+    <input type='hidden' name='status' value=''>
+  </form>
 
   <!-- Header -->
   <header class='bg-white border-b border-slate-200 px-6 py-4'>
@@ -49,7 +88,7 @@
   <main class='max-w-6xl mx-auto px-6 py-8'>
 
     <!-- Filters -->
-    <form method='get' class='flex flex-wrap gap-3 mb-8'>
+    <form method='get' class='flex flex-wrap gap-3 mb-6'>
       <input name='search' value='{{ search }}'
         placeholder='Search roles or companies...'
         class='flex-1 min-w-48 border border-slate-200 rounded-lg px-4 py-2 text-sm
@@ -58,11 +97,11 @@
       <select name='status' onchange='autoSubmit(this)'
         class='border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white'>
         <option value=''>All statuses</option>
-        <option value='new' {% if status_filter=='new' %}selected{% endif %}>New</option>
-        <option value='viewed' {% if status_filter=='viewed' %}selected{% endif %}>Viewed</option>
-        <option value='applied' {% if status_filter=='applied' %}selected{% endif %}>Applied</option>
+        <option value='new'         {% if status_filter=='new' %}selected{% endif %}>New</option>
+        <option value='viewed'      {% if status_filter=='viewed' %}selected{% endif %}>Viewed</option>
+        <option value='applied'     {% if status_filter=='applied' %}selected{% endif %}>Applied</option>
         <option value='not applied' {% if status_filter=='not applied' %}selected{% endif %}>Not Applied</option>
-        <option value='mismatched' {% if status_filter=='mismatched' %}selected{% endif %}>Mismatched</option>
+        <option value='mismatched'  {% if status_filter=='mismatched' %}selected{% endif %}>Mismatched</option>
       </select>
 
       <select name='per_page' onchange='autoSubmit(this)'
@@ -78,6 +117,42 @@
       </button>
     </form>
 
+    <!-- Select all row -->
+    <div class='flex items-center gap-3 mb-3 px-1'>
+      <input type='checkbox' id='select-all' onchange='toggleSelectAll(this)'
+        class='w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer'>
+      <label for='select-all' class='text-xs text-slate-500 cursor-pointer select-none'>
+        Select all on this page
+      </label>
+    </div>
+
+    <!-- Bulk action bar (hidden until jobs selected) -->
+    <div id='bulk-bar'
+         class='hidden sticky top-0 z-10 bg-blue-600 text-white rounded-xl px-5 py-3 mb-4
+                flex items-center justify-between gap-4 shadow-lg'>
+      <span class='text-sm font-medium'>
+        <span id='bulk-count'>0</span> jobs selected
+      </span>
+      <div class='flex gap-2 flex-wrap'>
+        <button onclick='submitBulk("viewed")'
+          class='text-xs bg-white text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 font-medium'>
+          Mark Viewed
+        </button>
+        <button onclick='submitBulk("applied")'
+          class='text-xs bg-white text-green-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 font-medium'>
+          Mark Applied
+        </button>
+        <button onclick='submitBulk("not applied")'
+          class='text-xs bg-white text-amber-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 font-medium'>
+          Mark Not Applied
+        </button>
+        <button onclick='submitBulk("mismatched")'
+          class='text-xs bg-white text-red-500 px-3 py-1.5 rounded-lg hover:bg-blue-50 font-medium'>
+          Mark Mismatched
+        </button>
+      </div>
+    </div>
+
     <!-- Job Cards -->
     <div class='space-y-3'>
     {% for job in jobs %}
@@ -85,13 +160,18 @@
                   hover:border-blue-300 hover:shadow-sm transition-all'>
         <div class='flex items-start gap-4'>
 
+          <!-- Checkbox -->
+          <input type='checkbox' class='job-checkbox mt-1.5 w-4 h-4 rounded border-slate-300
+                                        text-blue-600 cursor-pointer flex-shrink-0'
+                 value='{{ job.id }}' onchange='updateBulkBar()'>
+
           <!-- Company logo -->
           <img
-            src='https://logo.clearbit.com/{{ job.company | lower | replace(" ", "") }}.com'
+            src='https://img.logo.dev/{{ job.company | lower | replace(" ", "") }}.com?token=pk_public'
             alt='{{ job.company }}'
             class='w-10 h-10 rounded-lg object-contain border border-slate-100 flex-shrink-0 mt-0.5'
             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <!-- Fallback initials if logo fails -->
+          <!-- Fallback initials -->
           <div class='w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex-shrink-0
                       items-center justify-center text-blue-600 font-bold text-sm mt-0.5'
                style='display:none'>
@@ -102,12 +182,9 @@
           <div class='flex-1 min-w-0'>
             <div class='flex items-center justify-between gap-2 mb-1'>
               <div class='flex items-center gap-2 flex-wrap'>
-                <span class='text-sm font-semibold text-slate-800'>
-                  {{ job.company }}
-                </span>
+                <span class='text-sm font-semibold text-slate-800'>{{ job.company }}</span>
                 <span class='text-xs text-slate-400'>{{ job.location }}</span>
               </div>
-              <!-- Time ago -->
               <span class='text-xs text-slate-400 flex-shrink-0'
                     data-date='{{ job.date_found.isoformat() }}'>
                 {{ job.date_found.strftime('%Y-%m-%d') }}
@@ -119,19 +196,17 @@
               {{ job.title }}
             </a>
 
-            <p class='text-xs text-slate-400 mt-1'>
-              via {{ job.ats_source }}
-            </p>
+            <p class='text-xs text-slate-400 mt-1'>via {{ job.ats_source }}</p>
           </div>
 
           <!-- Status selector -->
           <form method='post' action='/update-status' class='flex-shrink-0'>
             <input type='hidden' name='job_id' value='{{ job.id }}'>
             <select name='status' onchange='this.form.submit()'
-              class='text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white
+              class='text-xs border rounded-lg px-2 py-1.5 bg-white cursor-pointer
                      {% if job.status == "new" %}text-blue-600 border-blue-200 bg-blue-50
                      {% elif job.status == "applied" %}text-green-600 border-green-200 bg-green-50
-                     {% elif job.status == "viewed" %}text-slate-600
+                     {% elif job.status == "viewed" %}text-slate-600 border-slate-200
                      {% elif job.status == "not applied" %}text-amber-600 border-amber-200 bg-amber-50
                      {% elif job.status == "mismatched" %}text-red-400 border-red-200 bg-red-50
                      {% endif %}'>
