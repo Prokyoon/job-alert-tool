@@ -37,13 +37,14 @@ def is_relevant(job: dict) -> bool:
     if has_blocked_language(job.get("title", "")):
         return False
 
-    # Location filter
-    if LOCATION_INCLUDE:
-        if not any(kw in location for kw in LOCATION_INCLUDE):
-            return False
-
-    # Exclude blocked locations
+    # Hard exclude — blocked locations take priority over everything
     if any(kw in location for kw in LOCATION_EXCLUDE):
         return False
+
+    # Location must match at least one allowed region
+    # Exception: if location is empty or generic, allow it through
+    if location and location not in ("remote", "see listing", ""):
+        if LOCATION_INCLUDE and not any(kw in location for kw in LOCATION_INCLUDE):
+            return False
 
     return True
