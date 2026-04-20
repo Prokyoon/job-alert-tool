@@ -29,7 +29,6 @@
       });
     });
 
-    // --- Bulk select logic ---
     function toggleSelectAll(master) {
       document.querySelectorAll('.job-checkbox').forEach(cb => {
         cb.checked = master.checked;
@@ -53,7 +52,6 @@
       const checked = document.querySelectorAll('.job-checkbox:checked');
       if (checked.length === 0) return;
       const form = document.getElementById('bulk-form');
-      // Clear previous hidden inputs
       form.querySelectorAll('input[name="job_ids"]').forEach(el => el.remove());
       checked.forEach(cb => {
         const input = document.createElement('input');
@@ -126,7 +124,7 @@
       </label>
     </div>
 
-    <!-- Bulk action bar (hidden until jobs selected) -->
+    <!-- Bulk action bar -->
     <div id='bulk-bar'
          class='hidden sticky top-0 z-10 bg-blue-600 text-white rounded-xl px-5 py-3 mb-4
                 flex items-center justify-between gap-4 shadow-lg'>
@@ -180,6 +178,8 @@
 
           <!-- Job info -->
           <div class='flex-1 min-w-0'>
+
+            <!-- Row 1: company + location + time -->
             <div class='flex items-center justify-between gap-2 mb-1'>
               <div class='flex items-center gap-2 flex-wrap'>
                 <span class='text-sm font-semibold text-slate-800'>{{ job.company }}</span>
@@ -191,12 +191,66 @@
               </span>
             </div>
 
+            <!-- Row 2: job title -->
             <a href='{{ job.url }}' target='_blank'
-               class='font-medium text-blue-600 hover:text-blue-800 hover:underline block truncate'>
+               class='font-medium text-blue-600 hover:text-blue-800 hover:underline block truncate mb-2'>
               {{ job.title }}
             </a>
 
-            <p class='text-xs text-slate-400 mt-1'>via {{ job.ats_source }}</p>
+            <!-- Row 3: pills — job type, experience, ats source -->
+            <div class='flex items-center gap-2 flex-wrap'>
+
+              {% if job.job_type and job.job_type != 'Not specified' %}
+                {% if job.job_type == 'Full-time' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100'>
+                    {{ job.job_type }}
+                  </span>
+                {% elif job.job_type == 'Contract' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100'>
+                    {{ job.job_type }}
+                  </span>
+                {% elif job.job_type == 'Part-time' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100'>
+                    {{ job.job_type }}
+                  </span>
+                {% elif job.job_type == 'Internship' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100'>
+                    {{ job.job_type }}
+                  </span>
+                {% else %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600'>
+                    {{ job.job_type }}
+                  </span>
+                {% endif %}
+              {% endif %}
+
+              {% if job.experience and job.experience != 'Not specified' %}
+                {% if job.experience in ['Senior', 'Principal', 'Leadership'] %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100'>
+                    {{ job.experience }}
+                  </span>
+                {% elif job.experience == 'Mid-level' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100'>
+                    {{ job.experience }}
+                  </span>
+                {% elif job.experience == 'Junior' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-100'>
+                    {{ job.experience }}
+                  </span>
+                {% elif job.experience == 'Manager' %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100'>
+                    {{ job.experience }}
+                  </span>
+                {% else %}
+                  <span class='text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600'>
+                    {{ job.experience }}
+                  </span>
+                {% endif %}
+              {% endif %}
+
+              <span class='text-xs text-slate-400'>via {{ job.ats_source }}</span>
+
+            </div>
           </div>
 
           <!-- Status selector -->
