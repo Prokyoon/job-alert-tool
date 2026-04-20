@@ -1,6 +1,6 @@
 companies:
- 
-# ---Top (25) RegTech Companies from Greenhouse (API, most reliable) ---
+
+# --- RegTech (Greenhouse) ---
 
 - name: ComplyAdvantage
   ats: greenhouse
@@ -91,7 +91,7 @@ companies:
   slug: ascent
 
 
-  # ---Top 8 (8) FinTech Companies from Greenhouse or Lever (API, most reliable) ---
+# --- FinTech (Greenhouse / Lever) ---
 
 - name: SoFi
   ats: greenhouse
@@ -129,7 +129,16 @@ companies:
   ats: greenhouse
   slug: gocardless
 
-  # ---Top 25 Hybrid (FinTech + RegTech) Companies from Greenhouse or Lever (API, most reliable) ---
+- name: Wise
+  ats: lever
+  slug: wise
+
+- name: Plaid
+  ats: lever
+  slug: plaid
+
+
+# --- Hybrid (FinTech + RegTech) ---
 
 - name: Stripe
   ats: greenhouse
@@ -163,14 +172,6 @@ companies:
   ats: greenhouse
   slug: marqeta
 
-- name: Wise
-  ats: lever
-  slug: wise
-
-- name: Plaid
-  ats: lever
-  slug: plaid
-
 - name: Airwallex
   ats: greenhouse
   slug: airwallex
@@ -183,11 +184,6 @@ companies:
   ats: greenhouse
   slug: rippling
 
-#Do NOT include Deel just yet
-#- name: Deel
-# ats: greenhouse
-#  slug: deel
-
 - name: Sumsub
   ats: greenhouse
   slug: sumsub
@@ -199,3 +195,159 @@ companies:
 - name: Circle
   ats: greenhouse
   slug: circle
+
+
+# --- Additional EU Startups (no duplicates) ---
+
+- name: Pleo
+  ats: greenhouse
+  slug: pleo
+
+- name: Spendesk
+  ats: greenhouse
+  slug: spendesk
+
+- name: Satispay
+  ats: greenhouse
+  slug: satispay
+
+- name: Scalapay
+  ats: greenhouse
+  slug: scalapay
+
+- name: Trade Republic
+  ats: greenhouse
+  slug: traderepublic
+
+- name: Bitpanda
+  ats: greenhouse
+  slug: bitpanda
+
+- name: Solaris
+  ats: greenhouse
+  slug: solaris
+
+- name: Mambu
+  ats: greenhouse
+  slug: mambu
+
+- name: Thought Machine
+  ats: greenhouse
+  slug: thoughtmachine
+
+- name: Griffin
+  ats: greenhouse
+  slug: griffin
+
+- name: TrueLayer
+  ats: greenhouse
+  slug: truelayer
+
+- name: Tink
+  ats: greenhouse
+  slug: tink
+
+- name: Volt
+  ats: greenhouse
+  slug: volt
+
+- name: Payhawk
+  ats: greenhouse
+  slug: payhawk
+
+- name: Finom
+  ats: greenhouse
+  slug: finom
+
+- name: Juni
+  ats: greenhouse
+  slug: juni
+
+- name: Moss
+  ats: greenhouse
+  slug: moss
+
+- name: Zilch
+  ats: greenhouse
+  slug: zilch
+
+- name: Cleo
+  ats: greenhouse
+  slug: meetcleo
+
+- name: Plum
+  ats: greenhouse
+  slug: withplum
+
+- name: Vivid Money
+  ats: greenhouse
+  slug: vividmoney
+
+- name: Raisin
+  ats: greenhouse
+  slug: raisin
+
+- name: Nium
+  ats: greenhouse
+  slug: nium
+
+
+# --- Other ATS platforms ---
+
+- name: Papaya Global
+  ats: workable
+  slug: papaya-global
+
+- name: Paychex
+  ats: bamboohr
+  slug: paychex
+
+- name: Paysend
+  ats: personio
+  slug: paysend
+
+- name: Modulr
+  ats: recruitee
+  slug: modulr
+
+- name: Yapily
+  ats: pinpoint
+  slug: yapily
+
+
+# --- Generic (large EU corporations) ---
+
+- name: Finastra
+  ats: generic
+  url: https://finastra.wd3.myworkdayjobs.com/finastra
+  selector: 'a[data-automation-id="jobTitle"]'
+
+- name: Temenos
+  ats: generic
+  url: https://www.temenos.com/careers/open-positions/
+  selector: '.job-listing a'
+
+- name: SAP
+  ats: generic
+  url: https://jobs.sap.com/
+  selector: 'a.jobTitle'
+
+- name: Siemens
+  ats: generic
+  url: https://jobs.siemens.com/
+  selector: 'a'
+
+- name: Deutsche Bank
+  ats: generic
+  url: https://careers.db.com/
+  selector: 'a'
+
+- name: ING
+  ats: generic
+  url: https://careers.ing.com/
+  selector: 'a'
+
+- name: BNP Paribas
+  ats: generic
+  url: https://group.bnpparibas/en/careers
+  selector: 'a'

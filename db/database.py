@@ -21,7 +21,9 @@ def init_db():
             url         TEXT NOT NULL,
             ats_source  TEXT,
             date_found  TIMESTAMP NOT NULL DEFAULT NOW(),
-            status      TEXT DEFAULT 'new'
+            status      TEXT DEFAULT 'new',
+            job_type    TEXT,
+            experience  TEXT
         )
     ''')
     conn.commit()
@@ -41,13 +43,15 @@ def insert_job(job: dict):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO jobs (id, company, title, location, url, ats_source)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO jobs (id, company, title, location, url, ats_source, job_type, experience)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (id) DO NOTHING
     ''', (
         job['id'], job['company'], job['title'],
         job.get('location', 'Remote'), job['url'],
-        job.get('ats')
+        job.get('ats', 'unknown'),
+        job.get('job_type'),
+        job.get('experience'),
     ))
     conn.commit()
     cur.close()
@@ -79,16 +83,6 @@ def update_status(job_id: str, status: str):
     cur.close()
     conn.close()
 
-def cleanup_old_jobs():
-    conn = get_connection()
-    cur = conn.cursor()
-    cutoff = datetime.utcnow() - timedelta(days=30)
-    cur.execute("DELETE FROM jobs WHERE date_found < %s", (cutoff,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    print("Old jobs cleaned up.")
-
 def bulk_update_status(job_ids: list, status: str):
     conn = get_connection()
     cur = conn.cursor()
@@ -99,3 +93,13 @@ def bulk_update_status(job_ids: list, status: str):
     conn.commit()
     cur.close()
     conn.close()
+
+def cleanup_old_jobs():
+    conn = get_connection()
+    cur = conn.cursor()
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    cur.execute("DELETE FROM jobs WHERE date_found < %s", (cutoff,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("Old jobs cleaned up.")
