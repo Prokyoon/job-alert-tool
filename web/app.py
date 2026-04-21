@@ -27,10 +27,10 @@ async def health_check():
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(
     request: Request,
-    status: str = "",
+    status: str = "new",       # default: show only New jobs
     search: str = "",
     page: int = 1,
-    per_page: int = 25
+    per_page: int = 100        # default: 100 per page
 ):
     try:
         all_jobs = get_all_jobs(
@@ -42,7 +42,7 @@ async def dashboard(
         all_jobs = []
 
     total = len(all_jobs)
-    per_page = per_page if per_page in [10, 25, 50, 100] else 25
+    per_page = per_page if per_page in [10, 25, 50, 100] else 100
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
     start = (page - 1) * per_page
@@ -61,15 +61,34 @@ async def dashboard(
 
 
 @app.post("/update-status")
-async def change_status(job_id: str = Form(...), status: str = Form(...)):
+async def change_status(
+    job_id: str = Form(...),
+    status: str = Form(...),
+    current_status: str = Form("new"),
+    current_search: str = Form(""),
+    current_page: int = Form(1),
+    current_per_page: int = Form(100),
+):
     update_status(job_id, status)
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse(
+        f"/?status={current_status}&search={current_search}"
+        f"&page={current_page}&per_page={current_per_page}",
+        status_code=303,
+    )
 
 
 @app.post("/bulk-update-status")
 async def bulk_update_status_route(
     job_ids: List[str] = Form(...),
-    status: str = Form(...)
+    status: str = Form(...),
+    current_status: str = Form("new"),
+    current_search: str = Form(""),
+    current_page: int = Form(1),
+    current_per_page: int = Form(100),
 ):
     bulk_update_status(job_ids, status)
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse(
+        f"/?status={current_status}&search={current_search}"
+        f"&page={current_page}&per_page={current_per_page}",
+        status_code=303,
+    )

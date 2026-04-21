@@ -6,6 +6,26 @@
   <title>Job Radar</title>
   <script src='https://cdn.tailwindcss.com'></script>
   <script>
+    // ── Persist status filter + per_page in sessionStorage ──────────────────
+    // On first load (no query params), restore the last-used values.
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const hasParams = params.has('status') || params.has('per_page');
+
+      if (hasParams) {
+        // Save whatever the server is showing right now
+        if (params.has('status'))   sessionStorage.setItem('jobradar_status',   params.get('status'));
+        if (params.has('per_page')) sessionStorage.setItem('jobradar_per_page', params.get('per_page'));
+      } else {
+        // No params — redirect to saved prefs (or sensible defaults)
+        const savedStatus  = sessionStorage.getItem('jobradar_status')   ?? 'new';
+        const savedPerPage = sessionStorage.getItem('jobradar_per_page') ?? '100';
+        window.location.replace(
+          '/?status=' + encodeURIComponent(savedStatus) + '&per_page=' + savedPerPage + '&page=1'
+        );
+      }
+    })();
+
     function autoSubmit(el) {
       el.closest('form').submit();
     }
@@ -70,6 +90,10 @@
   <!-- Hidden bulk form -->
   <form id='bulk-form' method='post' action='/bulk-update-status'>
     <input type='hidden' name='status' value=''>
+    <input type='hidden' name='current_status'   value='{{ status_filter }}'>
+    <input type='hidden' name='current_search'   value='{{ search }}'>
+    <input type='hidden' name='current_page'     value='{{ page }}'>
+    <input type='hidden' name='current_per_page' value='{{ per_page }}'>
   </form>
 
   <!-- Header -->
@@ -255,7 +279,11 @@
 
           <!-- Status selector -->
           <form method='post' action='/update-status' class='flex-shrink-0'>
-            <input type='hidden' name='job_id' value='{{ job.id }}'>
+            <input type='hidden' name='job_id'           value='{{ job.id }}'>
+            <input type='hidden' name='current_status'   value='{{ status_filter }}'>
+            <input type='hidden' name='current_search'   value='{{ search }}'>
+            <input type='hidden' name='current_page'     value='{{ page }}'>
+            <input type='hidden' name='current_per_page' value='{{ per_page }}'>
             <select name='status' onchange='this.form.submit()'
               class='text-xs border rounded-lg px-2 py-1.5 bg-white cursor-pointer
                      {% if job.status == "new" %}text-blue-600 border-blue-200 bg-blue-50

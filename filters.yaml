@@ -1,5 +1,4 @@
 include_keywords:
-  - Technical Support
   - Technical Support Specialist
   - Technical Support Analyst
   - Technical Support Engineer
@@ -8,10 +7,7 @@ include_keywords:
   - Technical Support L3
   - Technical Support Lead
   - Technical Support Team Lead
-  - Technical Support TL
-  - Technical Support Manager
   - Technical Account Manager
-  - Customer Support
   - Customer Support Specialist
   - Customer Support Analyst
   - Customer Support Engineer
@@ -20,60 +16,28 @@ include_keywords:
   - Customer Support L3
   - Customer Support Lead
   - Customer Support Team Lead
-  - Customer Support TL
-  - Customer Support Manager
   - Support Specialist
   - Support Analyst
   - Support Engineer
   - Support Team Lead
-  - Support Lead
-  - Support TL
-  - Support Manager
-  - TAM
-  - CSM
   - Customer Success Manager
-  - Implementation
+  - Implementation Specialist
+  - Implementation Analyst
+  - Implementation Engineer
+  - Implementation Consultant
+  - Implementation Manager
+  - Onboarding Specialist
+  - Onboarding Manager
+  - Solutions Engineer
+  - Customer Onboarding
 
-# Languages I am happy to work in
+# Only jobs in these languages are accepted. Any job title detected as another
+# language will be excluded. English and Romanian are the two allowed languages.
 allowed_languages:
-  - English
-  - Romanian
-  - Română
-  - Romana
-
-# All other languages — if found in the job title, the job is excluded
-blocked_languages:
-  - French
-  - German
-  - Deutsch
-  - Spanish
-  - Español
-  - Italian
-  - Italiano
-  - Portuguese
-  - Português
-  - Dutch
-  - Nederlands
-  - Swedish
-  - Svenska
-  - Danish
-  - Dansk
-  - Finnish
-  - Suomi
-  - Norwegian
-  - Polish
-  - Czech
-  - Slovak
-  - Hungarian
-  - Greek
-  - Turkish
-  - Arabic
-  - Hebrew
-  - Russian
-  - Ukrainian
-  - Mandarin
-  - Japanese
-  - Korean
+  - english
+  - romanian
+  - română
+  - romana
 
 location_keywords:
   - Europe
