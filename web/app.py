@@ -60,6 +60,16 @@ async def dashboard(
     })
 
 
+@app.get("/update-status")
+async def update_status_get():
+    return RedirectResponse("/?status=new&per_page=100", status_code=303)
+
+
+@app.get("/bulk-update-status")
+async def bulk_update_status_get():
+    return RedirectResponse("/?status=new&per_page=100", status_code=303)
+
+
 @app.post("/update-status")
 async def change_status(
     job_id: str = Form(...),
