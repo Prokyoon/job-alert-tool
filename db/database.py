@@ -12,6 +12,8 @@ def get_connection():
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
+
+    # --- existing jobs table ---
     cur.execute('''
         CREATE TABLE IF NOT EXISTS jobs (
             id          TEXT PRIMARY KEY,
@@ -26,6 +28,18 @@ def init_db():
             experience  TEXT
         )
     ''')
+
+    # --- NEW: audit log table ---
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id          SERIAL PRIMARY KEY,
+            job_id      TEXT NOT NULL,
+            new_status  TEXT NOT NULL,
+            changed_at  TIMESTAMP DEFAULT NOW(),
+            ip          TEXT
+        )
+    ''')
+
     conn.commit()
     cur.close()
     conn.close()
@@ -103,3 +117,38 @@ def cleanup_old_jobs():
     cur.close()
     conn.close()
     print("Old jobs cleaned up.")
+
+# ── NEW: audit log functions ──────────────────────────────────────────────────
+
+def log_audit(job_id: str, new_status: str, ip: str = ""):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO audit_log (job_id, new_status, ip) VALUES (%s, %s, %s)",
+        (job_id, new_status, ip),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_audit_log(limit: int = 200):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT
+            a.id,
+            a.job_id,
+            COALESCE(j.title,   'Unknown') AS title,
+            COALESCE(j.company, 'Unknown') AS company,
+            a.new_status,
+            a.changed_at,
+            a.ip
+        FROM audit_log a
+        LEFT JOIN jobs j ON j.id = a.job_id
+        ORDER BY a.changed_at DESC
+        LIMIT %s
+    """, (limit,))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(r) for r in rows]
