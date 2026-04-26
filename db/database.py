@@ -140,6 +140,105 @@ def log_audit(job_id: str, new_status: str, ip: str = ""):
     cur.close()
     conn.close()
 
+def get_stats():
+    """Return pipeline metrics for the /stats dashboard page."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Status breakdown
+    cur.execute("""
+        SELECT status, COUNT(*) AS count
+        FROM jobs
+        GROUP BY status
+        ORDER BY count DESC
+    """)
+    status_counts = {r["status"]: r["count"] for r in cur.fetchall()}
+
+    # ATS source breakdown
+    cur.execute("""
+        SELECT ats_source, COUNT(*) AS count
+        FROM jobs
+        GROUP BY ats_source
+        ORDER BY count DESC
+        LIMIT 10
+    """)
+    ats_counts = [dict(r) for r in cur.fetchall()]
+
+    # Jobs found per day (last 14 days)
+    cur.execute("""
+        SELECT DATE(date_found) AS day, COUNT(*) AS count
+        FROM jobs
+        WHERE date_found >= NOW() - INTERVAL '14 days'
+        GROUP BY day
+        ORDER BY day ASC
+    """)
+    daily_counts = [dict(r) for r in cur.fetchall()]
+
+    # Recent audit activity (last 7 days), grouped by day + action
+    cur.execute("""
+        SELECT DATE(changed_at) AS day, new_status, COUNT(*) AS count
+        FROM audit_log
+        WHERE changed_at >= NOW() - INTERVAL '7 days'
+        GROUP BY day, new_status
+        ORDER BY day ASC
+    """)
+    audit_activity = [dict(r) for r in cur.fetchall()]
+
+    # Total companies monitored (distinct companies in jobs table)
+    cur.execute("SELECT COUNT(DISTINCT company) FROM jobs")
+    total_companies = cur.fetchone()[0]
+
+    # Total ATS platforms
+    cur.execute("SELECT COUNT(DISTINCT ats_source) FROM jobs")
+    total_ats = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return {
+        "status_counts":   status_counts,
+        "ats_counts":      ats_counts,
+        "daily_counts":    daily_counts,
+        "audit_activity":  audit_activity,
+        "total_companies": total_companies,
+        "total_ats":       total_ats,
+        "total_jobs":      sum(status_counts.values()),
+    }
+
+
+def get_export_jobs(status=None):
+    """Return all jobs as plain dicts for CSV export."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    query = "SELECT id, company, title, location, url, ats_source, job_type, experience, status, date_found FROM jobs WHERE 1=1"
+    params = []
+    if status:
+        query += " AND status = %s"
+        params.append(status)
+    query += " ORDER BY date_found DESC"
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def health_check_db() -> dict:
+    """Verify DB connectivity and return basic counts. Used by /health endpoint."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM jobs")
+        total = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM jobs WHERE status = 'new'")
+        new_jobs = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return {"status": "ok", "total_jobs": total, "new_jobs": new_jobs}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
 def get_audit_log(limit: int = 200):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
