@@ -71,23 +71,32 @@ def insert_job(job: dict):
     cur.close()
     conn.close()
 
-def get_all_jobs(status=None, search=None):
+def get_all_jobs(status=None, search=None, limit=100, offset=0):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    query = "SELECT * FROM jobs WHERE 1=1"
+
+    base = "FROM jobs WHERE 1=1"
     params = []
     if status:
-        query += " AND status = %s"
+        base += " AND status = %s"
         params.append(status)
     if search:
-        query += " AND (title ILIKE %s OR company ILIKE %s)"
+        base += " AND (title ILIKE %s OR company ILIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
-    query += " ORDER BY date_found DESC"
-    cur.execute(query, params)
+
+    # Total count (same filters, no pagination)
+    cur.execute(f"SELECT COUNT(*) {base}", params)
+    total = cur.fetchone()[0]
+
+    # Paginated rows
+    cur.execute(
+        f"SELECT * {base} ORDER BY date_found DESC LIMIT %s OFFSET %s",
+        params + [limit, offset],
+    )
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in rows], total
 
 def update_status(job_id: str, status: str):
     conn = get_connection()

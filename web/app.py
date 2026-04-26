@@ -1,8 +1,11 @@
-from fastapi import FastAPI, Request, Form, Depends
+from fastapi import FastAPI, Request, Form, Depends, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from typing import List
 import os
 
@@ -11,6 +14,11 @@ from db.database import init_db, get_all_jobs, update_status, bulk_update_status
 init_db()
 
 app = FastAPI()
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 BASE_DIR = os.path.dirname(__file__)
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
@@ -86,6 +94,27 @@ class AuthMiddleware(BaseHTTPMiddleware):
 app.add_middleware(AuthMiddleware)
 
 
+# ── Security headers ──────────────────────────────────────────────────────────
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"]        = "DENY"
+        response.headers["Referrer-Policy"]        = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"]     = "geolocation=(), camera=(), microphone=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' cdn.tailwindcss.com 'unsafe-inline'; "
+            "img-src 'self' img.logo.dev data:; "
+            "style-src 'self' cdn.tailwindcss.com fonts.googleapis.com 'unsafe-inline'; "
+            "font-src fonts.gstatic.com; "
+            "connect-src 'none'"
+        )
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
 # ── Health check (unauthenticated — needed by Render) ────────────────────────
 @app.head("/")
 @app.get("/health")
@@ -138,26 +167,27 @@ async def logout():
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(
     request: Request,
-    status: str = "new",
-    search: str = "",
+    status: str = "",
+    search: str = Query(default="", max_length=100),  # Step 6: cap search length
     page: int = 1,
     per_page: int = 100,
 ):
+    per_page = per_page if per_page in [10, 25, 50, 100] else 100
+    offset   = (page - 1) * per_page
+
     try:
-        all_jobs = get_all_jobs(
+        jobs, total = get_all_jobs(          # Step 5: SQL pagination
             status=status if status else None,
-            search=search[:100] if search else None,   # cap search length
+            search=search if search else None,
+            limit=per_page,
+            offset=offset,
         )
     except Exception as e:
         print(f"Database error: {e}")
-        all_jobs = []
+        jobs, total = [], 0
 
-    total = len(all_jobs)
-    per_page = per_page if per_page in [10, 25, 50, 100] else 100
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
-    start = (page - 1) * per_page
-    jobs = all_jobs[start:start + per_page]
 
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -182,6 +212,7 @@ async def bulk_update_status_get():
 
 
 @app.post("/update-status")
+@limiter.limit("500/minute")
 async def change_status(
     request: Request,
     job_id: str = Form(...),
@@ -202,6 +233,7 @@ async def change_status(
 
 
 @app.post("/bulk-update-status")
+@limiter.limit("500/minute")
 async def bulk_update_status_route(
     request: Request,
     job_ids: List[str] = Form(...),
