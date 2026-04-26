@@ -8,8 +8,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from typing import List
 import os
+import csv
+import io
+import json
 
-from db.database import init_db, get_all_jobs, update_status, bulk_update_status, log_audit
+from db.database import (
+    init_db, get_all_jobs, update_status, bulk_update_status,
+    log_audit, get_audit_log, get_stats, get_export_jobs, health_check_db,
+)
 
 init_db()
 
@@ -117,9 +123,18 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # ── Health check (unauthenticated — needed by Render) ────────────────────────
 @app.head("/")
+async def health_head():
+    return Response(status_code=200)
+
 @app.get("/health")
 async def health_check():
-    return Response(status_code=200)
+    result = health_check_db()
+    status_code = 200 if result["status"] == "ok" else 503
+    return Response(
+        content=json.dumps(result),
+        status_code=status_code,
+        media_type="application/json",
+    )
 
 
 # ── Login ─────────────────────────────────────────────────────────────────────
@@ -182,9 +197,11 @@ async def dashboard(
             limit=per_page,
             offset=offset,
         )
+        coverage = get_stats()
     except Exception as e:
         print(f"Database error: {e}")
         jobs, total = [], 0
+        coverage = {"total_companies": 0, "total_ats": 0}
 
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
@@ -198,6 +215,8 @@ async def dashboard(
         "page": page,
         "per_page": per_page,
         "total_pages": total_pages,
+        "total_companies": coverage.get("total_companies", 0),
+        "total_ats": coverage.get("total_ats", 0),
     })
 
 
@@ -253,4 +272,51 @@ async def bulk_update_status_route(
         f"/?status={current_status}&search={current_search}"
         f"&page={current_page}&per_page={current_per_page}",
         status_code=303,
+    )
+
+
+# ── Stats dashboard ───────────────────────────────────────────────────────────
+@app.get("/stats", response_class=HTMLResponse)
+async def stats_page(request: Request):
+    try:
+        stats = get_stats()
+    except Exception as e:
+        print(f"Stats error: {e}")
+        stats = {}
+    return templates.TemplateResponse("stats.html", {
+        "request": request,
+        "stats": stats,
+    })
+
+
+# ── Audit log ─────────────────────────────────────────────────────────────────
+@app.get("/audit", response_class=HTMLResponse)
+async def audit_page(request: Request):
+    try:
+        entries = get_audit_log(limit=300)
+    except Exception as e:
+        print(f"Audit error: {e}")
+        entries = []
+    return templates.TemplateResponse("audit.html", {
+        "request": request,
+        "entries": entries,
+    })
+
+
+# ── CSV export ────────────────────────────────────────────────────────────────
+@app.get("/export")
+async def export_csv(status: str = ""):
+    rows = get_export_jobs(status=status if status else None)
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=[
+        "id", "company", "title", "location", "url",
+        "ats_source", "job_type", "experience", "status", "date_found",
+    ])
+    writer.writeheader()
+    writer.writerows(rows)
+    filename = f"jobradar_{status or 'all'}.csv"
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
