@@ -9,3 +9,19 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      - key: DATABASE_URL
+        sync: false 
+
+  - type: cron
+    name: job-scraper
+    runtime: python-3.11.15
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    schedule: "*/30 * * * *"   # every 30 minutes
+    startCommand: python -m scraper.run  
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
