@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+import csv
+import io
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -8,18 +10,18 @@ import os
 import secrets
 from datetime import datetime, timezone
 
-from database import (
+from db.database import (
     init_db, get_all_jobs, update_status, bulk_update_status,
-    log_audit, get_stats, get_audit_log, get_export_jobs, health_check_db
+    log_audit, get_stats, get_audit_log, get_export_jobs, health_check_db,
 )
 
 init_db()
 
 app = FastAPI()
 
-# ── Session middleware ────────────────────────────────────────────────────────
+# ── Session middleware ─────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_hex(32))
-SESSION_LIFETIME = 10 * 60  # 10 minutes in seconds
+SESSION_LIFETIME = 10 * 60  # 10 minutes
 
 app.add_middleware(
     SessionMiddleware,
@@ -37,7 +39,7 @@ static_dir = os.path.join(BASE_DIR, "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# ── Users ─────────────────────────────────────────────────────────────────────
+# ── Users ──────────────────────────────────────────────────────────────────────
 USERS = {
     os.getenv("ADMIN_USER", "admin"): {
         "password": os.getenv("ADMIN_PASS", "admin"),
@@ -49,7 +51,7 @@ USERS = {
     },
 }
 
-# ── Auth helpers ──────────────────────────────────────────────────────────────
+# ── Auth helpers ───────────────────────────────────────────────────────────────
 
 def _session_valid(request: Request) -> bool:
     user = request.session.get("user")
@@ -69,7 +71,7 @@ def get_current_user(request: Request):
     return None
 
 
-# ── Touch session timestamp on every authenticated request ────────────────────
+# ── Refresh session on every authenticated request ─────────────────────────────
 
 @app.middleware("http")
 async def refresh_session_timestamp(request: Request, call_next):
@@ -79,14 +81,14 @@ async def refresh_session_timestamp(request: Request, call_next):
     return response
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# ── Health check ───────────────────────────────────────────────────────────────
 
 @app.head("/")
-async def health_check():
+async def head_health():
     return Response(status_code=200)
 
 
-# ── Login / Logout ────────────────────────────────────────────────────────────
+# ── Login / Logout ─────────────────────────────────────────────────────────────
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, error: str = ""):
@@ -114,7 +116,7 @@ async def logout(request: Request):
     return RedirectResponse("/login", status_code=303)
 
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
+# ── Dashboard ──────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(
@@ -128,44 +130,37 @@ async def dashboard(
         return RedirectResponse("/login", status_code=303)
 
     current_user = get_current_user(request)
-
-try:
     per_page = per_page if per_page in [10, 25, 50, 100] else 100
     offset = (page - 1) * per_page
-    jobs, total = get_all_jobs(
-        status=status if status else None,
-        search=search if search else None,
-        limit=per_page,
-        offset=offset,
-    )
-except Exception as e:
-    print(f"Database error: {e}")
-    jobs, total = [], 0
+
+    try:
+        jobs, total = get_all_jobs(
+            status=status if status else None,
+            search=search if search else None,
+            limit=per_page,
+            offset=offset,
+        )
+    except Exception as e:
+        print(f"Database error: {e}")
+        jobs, total = [], 0
 
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
 
-    total       = len(all_jobs)
-    per_page    = per_page if per_page in [10, 25, 50, 100] else 100
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page        = max(1, min(page, total_pages))
-    start       = (page - 1) * per_page
-    jobs        = all_jobs[start : start + per_page]
-
-return templates.TemplateResponse("index.html", {
-    "request":       request,
-    "jobs":          jobs,
-    "total":         total,
-    "status_filter": status,
-    "search":        search,
-    "page":          page,
-    "per_page":      per_page,
-    "total_pages":   total_pages,
-    "current_user":  current_user,
+    return templates.TemplateResponse("index.html", {
+        "request":       request,
+        "jobs":          jobs,
+        "total":         total,
+        "status_filter": status,
+        "search":        search,
+        "page":          page,
+        "per_page":      per_page,
+        "total_pages":   total_pages,
+        "current_user":  current_user,
     })
 
 
-# ── Status updates ────────────────────────────────────────────────────────────
+# ── Status updates ─────────────────────────────────────────────────────────────
 
 @app.get("/update-status")
 async def update_status_get(request: Request):
@@ -223,9 +218,8 @@ async def bulk_update_status_route(
         status_code=303,
     )
 
-import csv
-import io
-from fastapi.responses import StreamingResponse
+
+# ── Stats ──────────────────────────────────────────────────────────────────────
 
 @app.get("/stats", response_class=HTMLResponse)
 async def stats_page(request: Request):
@@ -233,11 +227,13 @@ async def stats_page(request: Request):
         return RedirectResponse("/login", status_code=303)
     stats = get_stats()
     return templates.TemplateResponse("stats.html", {
-        "request": request,
-        "stats": stats,
+        "request":      request,
+        "stats":        stats,
         "current_user": get_current_user(request),
     })
 
+
+# ── Audit log ──────────────────────────────────────────────────────────────────
 
 @app.get("/audit", response_class=HTMLResponse)
 async def audit_page(request: Request):
@@ -245,11 +241,13 @@ async def audit_page(request: Request):
         return RedirectResponse("/login", status_code=303)
     entries = get_audit_log(limit=300)
     return templates.TemplateResponse("audit.html", {
-        "request": request,
-        "entries": entries,
+        "request":      request,
+        "entries":      entries,
         "current_user": get_current_user(request),
     })
 
+
+# ── CSV export ─────────────────────────────────────────────────────────────────
 
 @app.get("/export")
 async def export_csv(request: Request, status: str = ""):
@@ -259,7 +257,7 @@ async def export_csv(request: Request, status: str = ""):
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=[
         "id", "company", "title", "location", "url",
-        "ats_source", "job_type", "experience", "status", "date_found"
+        "ats_source", "job_type", "experience", "status", "date_found",
     ])
     writer.writeheader()
     writer.writerows(jobs)
@@ -271,6 +269,8 @@ async def export_csv(request: Request, status: str = ""):
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
+
+# ── Health ─────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health(request: Request):
