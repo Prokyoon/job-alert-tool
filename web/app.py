@@ -8,7 +8,10 @@ import os
 import secrets
 from datetime import datetime, timezone
 
-from db.database import init_db, get_all_jobs, update_status, bulk_update_status
+from database import (
+    init_db, get_all_jobs, update_status, bulk_update_status,
+    log_audit, get_stats, get_audit_log, get_export_jobs, health_check_db
+)
 
 init_db()
 
@@ -126,14 +129,21 @@ async def dashboard(
 
     current_user = get_current_user(request)
 
-    try:
-        all_jobs = get_all_jobs(
-            status=status if status else None,
-            search=search if search else None,
-        )
-    except Exception as e:
-        print(f"Database error: {e}")
-        all_jobs = []
+try:
+    per_page = per_page if per_page in [10, 25, 50, 100] else 100
+    offset = (page - 1) * per_page
+    jobs, total = get_all_jobs(
+        status=status if status else None,
+        search=search if search else None,
+        limit=per_page,
+        offset=offset,
+    )
+except Exception as e:
+    print(f"Database error: {e}")
+    jobs, total = [], 0
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, total_pages))
 
     total       = len(all_jobs)
     per_page    = per_page if per_page in [10, 25, 50, 100] else 100
@@ -142,16 +152,16 @@ async def dashboard(
     start       = (page - 1) * per_page
     jobs        = all_jobs[start : start + per_page]
 
-    return templates.TemplateResponse("index.html", {
-        "request":       request,
-        "jobs":          jobs,
-        "total":         total,
-        "status_filter": status,
-        "search":        search,
-        "page":          page,
-        "per_page":      per_page,
-        "total_pages":   total_pages,
-        "current_user":  current_user,
+return templates.TemplateResponse("index.html", {
+    "request":       request,
+    "jobs":          jobs,
+    "total":         total,
+    "status_filter": status,
+    "search":        search,
+    "page":          page,
+    "per_page":      per_page,
+    "total_pages":   total_pages,
+    "current_user":  current_user,
     })
 
 
@@ -184,6 +194,7 @@ async def change_status(
     if not _session_valid(request):
         return RedirectResponse("/login", status_code=303)
     update_status(job_id, status)
+    log_audit(job_id, status, request.client.host)
     return RedirectResponse(
         f"/?status={current_status}&search={current_search}"
         f"&page={current_page}&per_page={current_per_page}",
@@ -204,8 +215,63 @@ async def bulk_update_status_route(
     if not _session_valid(request):
         return RedirectResponse("/login", status_code=303)
     bulk_update_status(job_ids, status)
+    for job_id in job_ids:
+        log_audit(job_id, status, request.client.host)
     return RedirectResponse(
         f"/?status={current_status}&search={current_search}"
         f"&page={current_page}&per_page={current_per_page}",
         status_code=303,
     )
+
+import csv
+import io
+from fastapi.responses import StreamingResponse
+
+@app.get("/stats", response_class=HTMLResponse)
+async def stats_page(request: Request):
+    if not _session_valid(request):
+        return RedirectResponse("/login", status_code=303)
+    stats = get_stats()
+    return templates.TemplateResponse("stats.html", {
+        "request": request,
+        "stats": stats,
+        "current_user": get_current_user(request),
+    })
+
+
+@app.get("/audit", response_class=HTMLResponse)
+async def audit_page(request: Request):
+    if not _session_valid(request):
+        return RedirectResponse("/login", status_code=303)
+    entries = get_audit_log(limit=300)
+    return templates.TemplateResponse("audit.html", {
+        "request": request,
+        "entries": entries,
+        "current_user": get_current_user(request),
+    })
+
+
+@app.get("/export")
+async def export_csv(request: Request, status: str = ""):
+    if not _session_valid(request):
+        return RedirectResponse("/login", status_code=303)
+    jobs = get_export_jobs(status=status if status else None)
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=[
+        "id", "company", "title", "location", "url",
+        "ats_source", "job_type", "experience", "status", "date_found"
+    ])
+    writer.writeheader()
+    writer.writerows(jobs)
+    output.seek(0)
+    filename = f"jobs_{status or 'all'}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.get("/health")
+async def health(request: Request):
+    return health_check_db()

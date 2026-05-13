@@ -17,7 +17,7 @@ services:
     runtime: python-3.11.15
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     schedule: "*/30 * * * *"   # every 30 minutes
-    startCommand: python -m scraper.run  
+    startCommand: python run.py
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false

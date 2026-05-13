@@ -12,19 +12,20 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 bot = Bot(token=BOT_TOKEN)
 
 async def send_alert(job):
-    message = f"""
-🆕 New Job Found!
-
-🏢 Company: {job['company']}
-💼 Title: {job['title']}
-🔗 Apply: {job['url']}
-"""
+    message = (
+        f"🆕 *New Job Found!*\n\n"
+        f"🏢 *{job['company']}*\n"
+        f"💼 {job['title']}\n"
+        f"📍 {job.get('location', 'Remote')}\n"
+        f"🔗 [Apply here]({job['url']})"
+    )
 
     while True:
         try:
             await bot.send_message(
                 chat_id=CHAT_ID,
-                text=message
+                text=message,
+                parse_mode="Markdown",
             )
             return  # success → exit function
 
