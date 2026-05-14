@@ -3,37 +3,31 @@ import yaml
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from greenhouse import fetch_jobs as greenhouse_fetch
-from lever import fetch_jobs as lever_fetch
-from workable import fetch_jobs as workable_fetch
-from ashby import fetch_jobs as ashby_fetch
-from bamboohr import fetch_jobs as bamboohr_fetch
-from personio import fetch_jobs as personio_fetch
-from smartrecruiters import fetch_jobs as smartrecruiters_fetch
-from teamtailor import fetch_jobs as teamtailor_fetch
-from recruitee import fetch_jobs as recruitee_fetch
-from pinpoint import fetch_jobs as pinpoint_fetch
-from generic import fetch_jobs as generic_fetch
-from filters import is_relevant
-from database import init_db, job_exists, insert_job, cleanup_old_jobs
-from telegram_bot import notify
+from scraper.ats import (
+    greenhouse, lever, generic,
+    workable, ashby, bamboohr, personio,
+    smartrecruiters, teamtailor, recruitee, pinpoint
+)
+from scraper.filters import is_relevant
+from db.database import init_db, job_exists, insert_job, cleanup_old_jobs
+from bot.telegram_bot import notify
 
 COMPANIES_PATH = os.path.join(os.path.dirname(__file__), "companies.yaml")
 
 ATS_MAP = {
-    "greenhouse":      lambda c, n: greenhouse_fetch(c["slug"], n),
-    "lever":           lambda c, n: lever_fetch(c["slug"], n),
-    "workable":        lambda c, n: workable_fetch(c["slug"], n),
-    "ashby":           lambda c, n: ashby_fetch(c["slug"], n),
-    "bamboohr":        lambda c, n: bamboohr_fetch(c["slug"], n),
-    "personio":        lambda c, n: personio_fetch(c["slug"], n),
-    "smartrecruiters": lambda c, n: smartrecruiters_fetch(c["slug"], n),
-    "teamtailor":      lambda c, n: teamtailor_fetch(c["slug"], n),
-    "recruitee":       lambda c, n: recruitee_fetch(c["slug"], n),
-    "pinpoint":        lambda c, n: pinpoint_fetch(c["slug"], n),
-    "generic":         lambda c, n: generic_fetch(c["url"], n, c.get("selector", "a")),
+    "greenhouse":      lambda c, n: greenhouse.fetch_jobs(c["slug"], n),
+    "lever":           lambda c, n: lever.fetch_jobs(c["slug"], n),
+    "workable":        lambda c, n: workable.fetch_jobs(c["slug"], n),
+    "ashby":           lambda c, n: ashby.fetch_jobs(c["slug"], n),
+    "bamboohr":        lambda c, n: bamboohr.fetch_jobs(c["slug"], n),
+    "personio":        lambda c, n: personio.fetch_jobs(c["slug"], n),
+    "smartrecruiters": lambda c, n: smartrecruiters.fetch_jobs(c["slug"], n),
+    "teamtailor":      lambda c, n: teamtailor.fetch_jobs(c["slug"], n),
+    "recruitee":       lambda c, n: recruitee.fetch_jobs(c["slug"], n),
+    "pinpoint":        lambda c, n: pinpoint.fetch_jobs(c["slug"], n),
+    "generic":         lambda c, n: generic.fetch_jobs(c["url"], n, c.get("selector", "a")),
 }
 
 async def run():
