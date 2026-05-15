@@ -2,7 +2,7 @@ import yaml
 import re
 import os
 
-FILTERS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "filters.yaml")
+FILTERS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "filters.yaml")
 
 with open(FILTERS_PATH, encoding="utf-8") as f:
     config = yaml.safe_load(f)
