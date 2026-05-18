@@ -134,6 +134,8 @@ async def dashboard(
     offset = (page - 1) * per_page
 
     try:
+        # FIX: get_all_jobs returns (list, total) — unpack correctly and pass
+        # limit/offset so the DB does the pagination (not a Python slice).
         jobs, total = get_all_jobs(
             status=status if status else None,
             search=search if search else None,

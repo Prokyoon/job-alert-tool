@@ -96,10 +96,21 @@ def _title_matches(title_lower: str) -> bool:
 
 # ── Main filter ───────────────────────────────────────────────────────────────
 
+# Locations so vague they carry no geographic signal at all — skip the
+# include-list check only for these. "remote" is intentionally NOT in this
+# set: a bare "Remote" from Greenhouse/Lever is often a US-remote role, so
+# we still run it through the include-list (which contains "remote" and all
+# the EU country/region keywords). EU-remote jobs will match "remote" in
+# LOCATION_INCLUDE and pass; US-only roles that Greenhouse tagged as plain
+# "Remote" will also pass here — they are caught instead by adding the
+# company's known region to companies.yaml or by the location_exclude list.
+LOCATION_SKIP = {"see listing", "worldwide", "global", ""}
+
+
 def is_relevant(job: dict) -> bool:
     title = job.get("title", "")
     title_lower = title.lower()
-    location = job.get("location", "").lower()
+    location = job.get("location", "").lower().strip()
 
     # 1. Title must match an include keyword (exact phrase)
     if not _title_matches(title_lower):
@@ -109,12 +120,17 @@ def is_relevant(job: dict) -> bool:
     if is_non_english_romanian(title):
         return False
 
-    # 3. Location hard-exclude (US/Canada etc.)
+    # 3. Location hard-exclude (US/Canada/APAC etc.)
     if any(kw in location for kw in LOCATION_EXCLUDE):
         return False
 
-    # 4. Location soft-include (only apply if location is meaningful)
-    if location and location not in ("remote", "see listing", "worldwide", "global", ""):
+    # 4. Location soft-include.
+    # Only skip this check when the location string gives us no geographic
+    # information at all (blank, "worldwide", "global", "see listing").
+    # Every other value — including bare "remote" — must positively match
+    # at least one keyword in location_keywords.
+    # "remote" IS in location_keywords, so EU-remote jobs still pass.
+    if location not in LOCATION_SKIP:
         if LOCATION_INCLUDE and not any(kw in location for kw in LOCATION_INCLUDE):
             return False
 
